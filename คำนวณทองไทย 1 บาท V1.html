@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องคิดเลขราคาทองไทย Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-amber-50 min-h-screen py-8 px-4 flex flex-col justify-between">
+    <div class="max-w-md mx-auto w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-amber-200">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-amber-500 to-yellow-600 p-6 text-white text-center">
+            <h1 class="text-2xl font-bold">🪙 เครื่องคิดเลขราคาทองไทย Pro</h1>
+            <p class="text-amber-100 text-sm mt-1">คำนวณจาก Gold Spot และน้ำหนักทองไทย</p>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <!-- ส่วนที่ 1: คำนวณจาก Gold Spot และค่าปรับแต่งสูตร -->
+            <div class="bg-amber-50/80 p-4 rounded-xl border-2 border-amber-300 space-y-3 shadow-sm">
+                <h2 class="text-amber-900 font-bold text-sm flex items-center gap-1">
+                    <span>🌐</span> แปลงจากตลาดโลก (Gold Spot) <span class="text-xs font-normal text-amber-700">(คลิกช่องเพื่อพิมพ์แก้ไขได้)</span>
+                </h2>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Gold Spot ($/Oz)</label>
+                        <input type="number" id="goldSpot" value="4130" step="0.1" 
+                            class="w-full px-3 py-2 text-sm bg-white border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium shadow-inner" 
+                            oninput="calculateFromGoldSpot()">
+                        <span class="text-[10px] text-gray-500 mt-0.5 block">พิมพ์ราคาทองตลาดโลกที่นี่</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">ค่าเงินบาท (฿/$)</label>
+                        <input type="number" id="exchangeRate" value="33.53" step="0.01" 
+                            class="w-full px-3 py-2 text-sm bg-white border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium shadow-inner" 
+                            oninput="calculateFromGoldSpot()">
+                        <span class="text-[10px] text-gray-500 mt-0.5 block">พิมพ์อัตราแลกเปลี่ยนที่นี่</span>
+                    </div>
+                </div>
+
+                <!-- ช่องปรับแต่งค่า Fix / ตัวคูณสูตร พร้อมปุ่มกด + - -->
+                <div class="grid grid-cols-2 gap-3 pt-2 border-t border-amber-200">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">ค่า Premium ($)</label>
+                        <input type="number" id="goldPremium" value="3.0" step="0.1" 
+                            class="w-full px-3 py-2 text-sm bg-white border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium shadow-inner" 
+                            oninput="calculateFromGoldSpot()">
+                        <span class="text-[10px] text-gray-500 mt-0.5 block">ปรับเพิ่ม-ลดค่าพรีเมียม</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">ตัวคูณสูตร (Multiplier)</label>
+                        <div class="flex items-center space-x-1">
+                            <button type="button" onclick="adjustMultiplier(-0.0001)" class="bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-2.5 py-2 rounded-lg border border-amber-400 text-sm active:scale-95 transition">-</button>
+                            <input type="number" id="goldMultiplier" value="0.4725" step="0.0001" 
+                                class="w-full px-2 py-2 text-sm text-center bg-white border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium shadow-inner" 
+                                oninput="calculateFromGoldSpot()">
+                            <button type="button" onclick="adjustMultiplier(0.0001)" class="bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-2.5 py-2 rounded-lg border border-amber-400 text-sm active:scale-95 transition">+</button>
+                        </div>
+                        <span class="text-[10px] text-gray-500 mt-0.5 block">กดปุ่ม + หรือ - ปรับค่า</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ส่วนที่ 2: ราคาทองแท่งตั้งต้น -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-1 text-sm">ราคาทองคำแท่งขายออก (1 บาท):</label>
+                <input type="number" id="baseGoldPrice" value="40500" step="50" 
+                    class="w-full px-4 py-2.5 bg-amber-50/30 border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none font-bold text-amber-800 text-base shadow-sm" 
+                    oninput="calculateAll()">
+                <p class="text-xs text-red-600 mt-1 font-medium">*ราคาประมาณการอาจคาดเคลื่อน +- 200 บาท</p>
+            </div>
+
+            <!-- ส่วนที่ 3: เลือกน้ำหนักทองที่ต้องการคำนวณ -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-1 text-sm">ต้องการซื้อ/ขาย น้ำหนักเท่าไหร่?:</label>
+                <select id="goldWeight" 
+                    class="w-full px-4 py-2.5 bg-white border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium shadow-sm" 
+                    onchange="calculateAll()">
+                    <option value="1">ทองคำ 1 บาท (15.244 กรัม)</option>
+                    <option value="0.5">ทอง 2 สลึง / 50 สตางค์ (7.62 กรัม)</option>
+                    <option value="0.25" selected>ทอง 1 สลึง (3.81 กรัม)</option>
+                    <option value="0.125">ทองครึ่งสลึง (1.905 กรัม)</option>
+                    <option value="custom">กรัม (กำหนดเอง)</option>
+                </select>
+            </div>
+
+            <!-- ช่องกรอกน้ำหนักเอง (ซ่อนไว้ถ้าไม่ได้เลือกหน่วยกรัม) -->
+            <div id="customWeightDiv" class="hidden">
+                <label class="block text-gray-700 font-semibold mb-1 text-sm">ระบุน้ำหนัก (กรัม):</label>
+                <input type="number" id="customGrams" value="1" step="0.1" 
+                    class="w-full px-4 py-2 bg-white border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none shadow-sm" 
+                    oninput="calculateAll()">
+            </div>
+
+            <!-- ค่ากำเหน็จ / ค่าบล็อก -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-1 text-sm">ค่ากำเหน็จ (บาท):</label>
+                <input type="number" id="kamnerd" value="500" 
+                    class="w-full px-4 py-2 bg-white border-2 border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none shadow-sm" 
+                    oninput="calculateAll()">
+            </div>
+
+            <!-- ปุ่มคำนวณใหม่ / คำนวณอีกครั้ง -->
+            <div>
+                <button type="button" onclick="calculateFromGoldSpot()" 
+                    class="w-full bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition active:scale-[0.98] text-base flex items-center justify-center gap-2">
+                    <span>🔄</span> คำนวณใหม่ / คำนวณอีกครั้ง
+                </button>
+            </div>
+
+            <hr class="border-amber-200 my-2">
+
+            <!-- ส่วนที่ 4: แสดงผลลัพธ์ -->
+            <div class="bg-amber-100/70 rounded-xl p-4 space-y-3 border-2 border-amber-300 shadow-sm">
+                <h2 class="text-amber-900 font-bold text-base border-b border-amber-300 pb-1">ผลการคำนวณสุทธิ</h2>
+                
+                <div class="flex justify-between text-gray-700 text-sm">
+                    <span class="font-medium">ราคาทองตามน้ำหนัก:</span>
+                    <span id="resGoldPrice" class="font-bold text-gray-800">0 บาท</span>
+                </div>
+                
+                <div class="flex justify-between text-gray-700">
+                    <span class="font-semibold text-amber-900">ราคารวมซื้อ (รวมค่ากำเหน็จ):</span>
+                    <span id="resTotalBuy" class="font-bold text-amber-700 text-xl">0 บาท</span>
+                </div>
+
+                <div class="flex justify-between text-gray-700 text-sm pt-1 border-t border-amber-200">
+                    <span class="text-red-600 font-medium">*ราคาประมาณการอาจคาดเคลื่อน +- 200 บาท</span>
+                    <span id="resSellBack" class="font-semibold text-gray-700">0 บาท</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Credits -->
+        <div class="bg-amber-100 px-6 py-3 text-center border-t border-amber-200 text-xs text-amber-800 font-medium">
+            สร้างโดยปี่เซี้ย ด้วย AI Gemini ตุลาคม 2569
+        </div>
+    </div>
+
+    <script>
+        // ฟังก์ชันปรับค่าตัวคูณ (Multiplier) พร้อมป้องกันไม่ให้ต่ำกว่าหรือเท่ากับ 0
+        function adjustMultiplier(amount) {
+            let multiplierInput = document.getElementById('goldMultiplier');
+            let currentValue = parseFloat(multiplierInput.value) || 0;
+            let newValue = currentValue + amount;
+            
+            // ป้องกันไม่ให้ค่าติดลบหรือเท่ากับ 0
+            if (newValue <= 0) {
+                newValue = 0.0001;
+            }
+            
+            // ปัดเศษทศนิยมไม่ให้เกิน 4 ตำแหน่งเพื่อความสวยงาม
+            multiplierInput.value = parseFloat(newValue.toFixed(4));
+            calculateFromGoldSpot();
+        }
+
+        // ฟังก์ชันแปลง Gold Spot เป็นราคาทองไทย 1 บาท
+        function calculateFromGoldSpot() {
+            let goldSpot = parseFloat(document.getElementById('goldSpot').value) || 0;
+            let exchangeRate = parseFloat(document.getElementById('exchangeRate').value) || 0;
+            let premium = parseFloat(document.getElementById('goldPremium').value) || 0;
+            let multiplier = parseFloat(document.getElementById('goldMultiplier').value) || 0.4725;
+
+            // สูตร: (Gold Spot + Premium) * ตัวคูณสูตร * ค่าเงินบาท
+            let calculatedBahtPrice = (goldSpot + premium) * multiplier * exchangeRate;
+
+            // นำค่าที่คำนวณได้ไปใส่ในช่องราคาทองคำแท่งตั้งต้น
+            document.getElementById('baseGoldPrice').value = Math.round(calculatedBahtPrice);
+            
+            // สั่งคำนวณผลลัพธ์ตามน้ำหนักต่อทันที
+            calculateAll();
+        }
+
+        // ฟังก์ชันคำนวณราคาทองตามน้ำหนัก
+        function calculateAll() {
+            let basePrice = parseFloat(document.getElementById('baseGoldPrice').value) || 0;
+            let weightSelect = document.getElementById('goldWeight').value;
+            let kamnerd = parseFloat(document.getElementById('kamnerd').value) || 0;
+            
+            let weightInBaht = 0;
+            let customDiv = document.getElementById('customWeightDiv');
+
+            if (weightSelect === 'custom') {
+                customDiv.classList.remove('hidden');
+                let grams = parseFloat(document.getElementById('customGrams').value) || 0;
+                weightInBaht = grams / 15.244; // แปลงกรัมเป็นบาททอง
+            } else {
+                customDiv.classList.add('hidden');
+                weightInBaht = parseFloat(weightSelect);
+            }
+
+            // คำนวณราคาทองตามน้ำหนัก
+            let goldPriceForWeight = basePrice * weightInBaht;
+            let totalBuy = goldPriceForWeight + kamnerd;
+
+            // คำนวณราคารับซื้อคืน (อิงฐานรับซื้อต่ำกว่าขายออก 200 บาท และหัก 5% รูปพรรณ)
+            let baseBuyBack = basePrice - 200; 
+            let sellBack = (baseBuyBack * weightInBaht) * 0.95;
+
+            // แสดงผลลัพธ์ลงหน้าจอ
+            document.getElementById('resGoldPrice').innerText = goldPriceForWeight.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' บาท';
+            document.getElementById('resTotalBuy').innerText = totalBuy.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' บาท';
+            document.getElementById('resSellBack').innerText = sellBack.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' บาท';
+        }
+
+        // รันคำนวณเริ่มต้นเมื่อเปิดหน้าเว็บ
+        calculateFromGoldSpot();
+    </script>
+</body>
+</html>
